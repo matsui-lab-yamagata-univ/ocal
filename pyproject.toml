@@ -1,0 +1,49 @@
+[project]
+name = "ocal"
+version = "0.1.0"
+description = "Program for the calculation of orbital tail fraction (OTF)."
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.4.6",
+    "pandas>=3.0.5",
+]
+authors = [
+    {name = "Hiroyuki Matsui", email = "h-matsui@yz.yamagata-u.ac.jp"},
+    {name = "Tomoharu Okada"},
+    {name = "Koki Ozawa"},
+]
+readme = "README.md"
+keywords = ["organic semiconductor", "orbital tail fraction"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ocal"]
+
+[dependency-groups]
+dev = [
+    "autodoc-pydantic>=2.2.0",
+    "furo>=2025.12.19",
+    "sphinx>=7.4.7",
+    "taskipy>=1.14.1",
+]
+
+[tool.taskipy.tasks]
+generate-docs = "sphinx-apidoc -f -T -o docs src && sphinx-build -M clean docs docs/_build && sphinx-build -b html docs docs/_build/html"
+
+[project.scripts]
+ocal = "ocal.ocal:main"
