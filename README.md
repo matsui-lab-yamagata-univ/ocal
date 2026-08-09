@@ -9,6 +9,10 @@ English / [日本語](README_ja.md)
 
 The OTF quantifies how much of a frontier orbital spills out of the molecular van der Waals volume, i.e. how much of it is available for intermolecular overlap.
 
+<p align="center">
+  <img src="assets/OTF.gif" alt="Orbital tail fraction (OTF) illustration" width="400">
+</p>
+
 # Requirements
 * Python 3.11 or newer
 * NumPy
