@@ -17,6 +17,12 @@ as the OTF.
 The OTF quantifies how much of a frontier orbital spills out of the molecular van der
 Waals volume, i.e. how much of it is available for intermolecular overlap.
 
+.. raw:: html
+
+   <p align="center">
+     <img src="_static/OTF.gif" alt="Orbital tail fraction (OTF) illustration" width="400">
+   </p>
+
 .. note::
 
    The molecule is always treated as a neutral closed-shell singlet (charge/spin fixed
