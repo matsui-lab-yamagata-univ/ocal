@@ -197,6 +197,6 @@ Structure files come in various formats, and some may not be readable by ocal. P
 
 # Authors
 [Matsui Laboratory, Research Center for Organic Electronics (ROEL), Yamagata University](https://matsui-lab.yz.yamagata-u.ac.jp/index-e.html)  
-Hiroyuki Matsui, Tomoharu Okada, Koki Ozawa  
+Tomoharu Okada, Koki Ozawa, Hiroyuki Matsui  
 Email: h-matsui[at]yz.yamagata-u.ac.jp  
 Please replace [at] with @
