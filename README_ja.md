@@ -197,6 +197,6 @@ ocal xxx.cube -s
 
 # 著者
 [松井研究室, 有機エレクトロニクス研究センター（ROEL）, 山形大学](https://matsui-lab.yz.yamagata-u.ac.jp/)  
-松井 弘之, 岡田 智悠, 尾沢 昂輝  
+岡田 智悠, 尾沢 昂輝, 松井 弘之  
 Email: h-matsui[at]yz.yamagata-u.ac.jp  
 [at] を @ に置き換えてください

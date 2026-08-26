@@ -9,8 +9,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 # -- Project information -----------------------------------------------------
 project = "ocal"
-author = "Hiroyuki Matsui, Tomoharu Okada, Koki Ozawa"
-copyright = "2026, Hiroyuki Matsui, Tomoharu Okada, Koki Ozawa"
+author = "Tomoharu Okada, Koki Ozawa, Hiroyuki Matsui"
+copyright = "2026, Tomoharu Okada, Koki Ozawa, Hiroyuki Matsui"
 release = "0.1.0"
 version = "0.1.0"
 

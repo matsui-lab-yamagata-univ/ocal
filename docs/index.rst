@@ -137,7 +137,7 @@ Authors
 `Matsui Laboratory, Research Center for Organic Electronics (ROEL), Yamagata University
 <https://matsui-lab.yz.yamagata-u.ac.jp/index-e.html>`_
 
-Hiroyuki Matsui, Tomoharu Okada, Koki Ozawa
+Tomoharu Okada, Koki Ozawa, Hiroyuki Matsui
 
 Email: h-matsui[at]yz.yamagata-u.ac.jp (please replace [at] with @)
 
