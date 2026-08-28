@@ -1,8 +1,9 @@
 # ocal: 有機半導体分子の軌道テール割合（OTF）計算プログラム
 [![Python](https://img.shields.io/badge/python-3.11%20or%20newer-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![PyPI](https://img.shields.io/pypi/v/yu-ocal)](https://pypi.org/project/yu-ocal/)
 
-[English](README.md) / 日本語
+[English](https://github.com/matsui-lab-yamagata-univ/ocal/blob/main/README.md) / 日本語
 
 # 概要
 `ocal` は有機半導体分子 1 分子の軌道テール割合（orbital tail fraction, OTF）を計算するツールです。分子構造または結晶構造（CIF）から Gaussian の入力を生成し、構造最適化を実行し、チェックポイントファイルを変換して、フロンティア軌道 4 本（NHOMO, HOMO, LUMO, NLUMO）の分子軌道 cube ファイルを生成します。各軌道について、分子のファンデルワールス表面より**外側**にあるボクセルの確率密度を積分し、その割合を OTF として報告します。
@@ -10,13 +11,13 @@
 OTF は、フロンティア軌道がどれだけ分子のファンデルワールス体積からはみ出しているか、すなわち分子間の軌道の重なりにどれだけ寄与しうるかを定量化した指標です。
 
 <p align="center">
-  <img src="assets/OTF.gif" alt="軌道テール割合（OTF）の概念図" width="400">
+  <img src="https://raw.githubusercontent.com/matsui-lab-yamagata-univ/ocal/main/assets/OTF.gif" alt="軌道テール割合（OTF）の概念図" width="400">
 </p>
 
 # 必要環境
 * Python 3.11 以降
-* NumPy
-* Pandas
+* NumPy 2.0.2 以降
+* Pandas 2.3.3 以降
 
 ## 量子化学計算ツール
 以下が必要です:
@@ -29,11 +30,13 @@ OTF は、フロンティア軌道がどれだけ分子のファンデルワー�
 * 構造ファイルを入力とした場合、cube ファイルの生成前に必ず `Opt=Tight` で構造最適化が実行されます。
 
 # インストール
-リポジトリをクローンした後、リポジトリのルートで以下のインストールコマンドを実行してください。
+`ocal` は PyPI では **`yu-ocal`** という名前で配布されています（import 名・コマンド名はいずれも `ocal` です）。
 
 ```bash
-pip install -e .
+pip install yu-ocal
 ```
+
+NumPy と Pandas は自動的にインストールされます。Gaussian 16 は含まれないため、別途インストールが必要です。
 
 ## インストールの確認
 

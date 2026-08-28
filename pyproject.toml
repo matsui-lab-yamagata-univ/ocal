@@ -1,11 +1,13 @@
 [project]
-name = "ocal"
-version = "0.1.0"
+name = "yu-ocal"
+dynamic = ["version"]
 description = "Program for the calculation of orbital tail fraction (OTF)."
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
-    "numpy>=2.4.6",
-    "pandas>=3.0.5",
+    "numpy>=2.0.2",
+    "pandas>=2.3.3",
 ]
 authors = [
     {name = "Hiroyuki Matsui", email = "h-matsui@yz.yamagata-u.ac.jp"},
@@ -16,10 +18,12 @@ readme = "README.md"
 keywords = ["organic semiconductor", "orbital tail fraction"]
 classifiers = [
     "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.14",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Education",
     "Topic :: Scientific/Engineering",
@@ -27,12 +31,27 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
+[project.urls]
+Homepage = "https://github.com/matsui-lab-yamagata-univ/ocal"
+Documentation = "https://matsui-lab-yamagata-univ.github.io/ocal/"
+Repository = "https://github.com/matsui-lab-yamagata-univ/ocal"
+Issues = "https://github.com/matsui-lab-yamagata-univ/ocal/issues"
+
+[project.scripts]
+ocal = "ocal.ocal:main"
+
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/ocal/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ocal"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/ocal", "README.md", "README_ja.md", "LICENSE"]
 
 [dependency-groups]
 dev = [
@@ -44,6 +63,3 @@ dev = [
 
 [tool.taskipy.tasks]
 generate-docs = "sphinx-apidoc -f -T -o docs src && sphinx-build -M clean docs docs/_build && sphinx-build -b html docs docs/_build/html"
-
-[project.scripts]
-ocal = "ocal.ocal:main"

@@ -33,18 +33,22 @@ Requirements
 ------------
 
 * Python 3.11 or newer
-* NumPy
-* Pandas
+* NumPy 2.0.2 or newer
+* Pandas 2.3.3 or newer
 * Gaussian 16 (the ``g16``, ``formchk``, and ``cubegen`` executables must be on ``$PATH``)
 
 Installation
 ------------
 
-After cloning the repository, run the install command from the repository root:
+``ocal`` is distributed on PyPI under the name ``yu-ocal`` (the import name and the
+command name are both ``ocal``):
 
 .. code-block:: bash
 
-   pip install -e .
+   pip install yu-ocal
+
+NumPy and Pandas are installed automatically; Gaussian 16 is not included and must be
+installed separately.
 
 Verify the installation with:
 

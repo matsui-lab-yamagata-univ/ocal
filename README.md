@@ -1,8 +1,9 @@
 # ocal: Program for the calculation of orbital tail fraction (OTF) for organic semiconductor molecules
 [![Python](https://img.shields.io/badge/python-3.11%20or%20newer-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![PyPI](https://img.shields.io/pypi/v/yu-ocal)](https://pypi.org/project/yu-ocal/)
 
-English / [日本語](README_ja.md)
+English / [日本語](https://github.com/matsui-lab-yamagata-univ/ocal/blob/main/README_ja.md)
 
 # Overview
 `ocal` is a tool for calculating the orbital tail fraction (OTF) of a single organic semiconductor molecule. Starting from a molecular or crystal structure file, it generates a Gaussian input, runs a geometry optimization, converts the checkpoint file, and generates molecular-orbital cube files for the four frontier orbitals (NHOMO, HOMO, LUMO, NLUMO). For each orbital it integrates the probability density over the voxels that lie **outside** the van der Waals surface of the molecule, and reports that fraction as the OTF.
@@ -10,13 +11,13 @@ English / [日本語](README_ja.md)
 The OTF quantifies how much of a frontier orbital spills out of the molecular van der Waals volume, i.e. how much of it is available for intermolecular overlap.
 
 <p align="center">
-  <img src="assets/OTF.gif" alt="Orbital tail fraction (OTF) illustration" width="400">
+  <img src="https://raw.githubusercontent.com/matsui-lab-yamagata-univ/ocal/main/assets/OTF.gif" alt="Orbital tail fraction (OTF) illustration" width="400">
 </p>
 
 # Requirements
 * Python 3.11 or newer
-* NumPy
-* Pandas
+* NumPy 2.0.2 or newer
+* Pandas 2.3.3 or newer
 
 ## Quantum Chemistry Calculation Tools
 The following is required:
@@ -29,11 +30,13 @@ The following is required:
 * Structure-file inputs are always geometry-optimized with `Opt=Tight` before the cube files are generated.
 
 # Installation
-After cloning the repository, run the install command from the repository root.
+`ocal` is distributed on PyPI under the name **`yu-ocal`** (the import name and the command name are both `ocal`).
 
 ```bash
-pip install -e .
+pip install yu-ocal
 ```
+
+NumPy and Pandas are installed automatically. Gaussian 16 is **not** included and must be installed separately.
 
 ## Verify Installation
 
