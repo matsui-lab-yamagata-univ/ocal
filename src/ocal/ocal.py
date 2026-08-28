@@ -16,6 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from time import time
 
+from . import __date__, __version__
 from .utils.cube_reader import calc_otf as _calc_otf_from_cube
 from .utils.gaus_log_reader import check_normal_termination as _check_normal_termination
 from .utils.gjf_maker import GjfMaker
@@ -37,7 +38,7 @@ def main() -> None:
     parser, args = parse_args()
 
     print("----------------------------------------")
-    print(" ocal 0.1.0 (2026/08/06) by Matsui Lab. ")
+    print(f" ocal {__version__} ({__date__}) by Matsui Lab. ")
     print("----------------------------------------")
     print()
 

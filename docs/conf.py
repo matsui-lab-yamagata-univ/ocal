@@ -8,11 +8,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 # -- Project information -----------------------------------------------------
+from ocal import __version__  # noqa: E402  (requires the sys.path entry above)
+
 project = "ocal"
 author = "Tomoharu Okada, Koki Ozawa, Hiroyuki Matsui"
 copyright = "2026, Tomoharu Okada, Koki Ozawa, Hiroyuki Matsui"
-release = "0.1.0"
-version = "0.1.0"
+release = __version__
+version = __version__
 
 # -- General configuration ---------------------------------------------------
 extensions = [
