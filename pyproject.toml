@@ -10,9 +10,9 @@ dependencies = [
     "pandas>=2.3.3",
 ]
 authors = [
-    {name = "Hiroyuki Matsui", email = "h-matsui@yz.yamagata-u.ac.jp"},
     {name = "Tomoharu Okada"},
     {name = "Koki Ozawa"},
+    {name = "Hiroyuki Matsui", email = "h-matsui@yz.yamagata-u.ac.jp"},
 ]
 readme = "README.md"
 keywords = ["organic semiconductor", "orbital tail fraction"]
