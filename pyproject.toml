@@ -52,6 +52,7 @@ packages = ["src/ocal"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src/ocal", "README.md", "README_ja.md", "LICENSE"]
+exclude = ["/.github"]
 
 [dependency-groups]
 dev = [
