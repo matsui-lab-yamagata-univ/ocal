@@ -1,4 +1,4 @@
-# ocal: Program for the calculation of orbital tail fraction (OTF) for organic semiconductor molecules
+# ocal: Program for the calculation of orbital tail fraction (OTF) and participation ratio per molecular volume (PR/V) for organic semiconductor molecules
 [![Python](https://img.shields.io/badge/python-3.11%20or%20newer-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PyPI](https://img.shields.io/pypi/v/yu-ocal)](https://pypi.org/project/yu-ocal/)
@@ -7,13 +7,34 @@
 English / [日本語](https://github.com/matsui-lab-yamagata-univ/ocal/blob/main/README_ja.md)
 
 # Overview
-`ocal` is a tool for calculating the orbital tail fraction (OTF) of a single organic semiconductor molecule. Starting from a molecular or crystal structure file, it generates a Gaussian input, runs a geometry optimization, converts the checkpoint file, and generates molecular-orbital cube files for the four frontier orbitals (NHOMO, HOMO, LUMO, NLUMO). For each orbital it integrates the probability density over the voxels that lie **outside** the van der Waals surface of the molecule, and reports that fraction as the OTF.
+`ocal` is a tool for calculating the orbital tail fraction (OTF) and the participation ratio per molecular volume (PR/V) of a single organic semiconductor molecule. Starting from a molecular or crystal structure file, it generates a Gaussian input, runs a geometry optimization, converts the checkpoint file, and generates molecular-orbital cube files for the four frontier orbitals (NHOMO, HOMO, LUMO, NLUMO). It then computes the OTF and the PR/V for each orbital.
 
-The OTF quantifies how much of a frontier orbital spills out of the molecular van der Waals volume, i.e. how much of it is available for intermolecular overlap.
+The OTF quantifies how much of a frontier orbital spills out of the molecular van der Waals volume, i.e. how much of it is available for intermolecular overlap. `PR` has the dimension of volume and expresses the volume the orbital effectively occupies, so the dimensionless `PR/V` quantifies how far the orbital is delocalized relative to the size of the molecule itself.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/matsui-lab-yamagata-univ/ocal/main/assets/OTF.gif" alt="Orbital tail fraction (OTF) illustration" width="400">
 </p>
+
+## Definitions
+The OTF is the integral of the squared absolute value of the wavefunction over the region **outside** the van der Waals radii of the atoms:
+
+```math
+\mathrm{OTF} = \int_{\mathbf{r} \notin V_\mathrm{vdW}} |\psi(\mathbf{r})|^2 \, d\mathbf{r}
+```
+
+The participation ratio `PR` (in Å³) and the PR/V are defined as
+
+```math
+\mathrm{PR} = \frac{\left(\int |\psi(\mathbf{r})|^2 \, d\mathbf{r}\right)^2}{\int |\psi(\mathbf{r})|^4 \, d\mathbf{r}},
+\qquad
+\mathrm{PR/V} = \frac{\mathrm{PR}}{V}
+```
+
+where
+
+- `ψ` is the normalized molecular orbital,
+- `V_vdW` is the union of the van der Waals spheres of all atoms (a point lies outside it when its distance to every atom exceeds that atom's van der Waals radius), and
+- `V` is the volume of `V_vdW`.
 
 # Requirements
 * Python 3.11 or newer
@@ -27,7 +48,8 @@ The following is required:
 # Important notice
 * The path of the Gaussian executable must be set. `ocal` invokes `g16`, `formchk`, and `cubegen` as subprocesses.
 * The molecule is always treated as a **neutral closed-shell singlet**. Charge and spin multiplicity are fixed to `0 1`; any charge/spin information contained in the input file is ignored.
-* The functional and basis set are fixed to **B3LYP/6-31G(d,p)** so that OTF values remain comparable with previously published results. This is not exposed as a command-line option.
+* The functional and basis set are fixed to **B3LYP/6-31G(d,p)** so that OTF and PR/V values remain comparable with previously published results. This is not exposed as a command-line option.
+* For the same reason, the molecular volume `V` in PR/V is always integrated on a cubic grid with a fixed spacing of **0.2 Å**. This is not exposed as a command-line option either.
 * Structure-file inputs are always geometry-optimized with `Opt=Tight` before the cube files are generated.
 
 # Installation
@@ -63,11 +85,13 @@ ocal <filename> [options]
 
 | Input | Extensions | Pipeline stages executed |
 |-------|------------|--------------------------|
-| Structure file | `.gjf`, `.com`, `.xyz`, `.mol`, `.mol2`, `.cif` | gjf generation → Gaussian (Opt=Tight) → formchk → cubegen → OTF |
-| Formatted checkpoint | `.fchk` | cubegen → OTF |
-| Cube file | `.cube` | OTF only |
+| Structure file | `.gjf`, `.com`, `.xyz`, `.mol`, `.mol2`, `.cif` | gjf generation → Gaussian (Opt=Tight) → formchk → cubegen → OTF, PR/V |
+| Formatted checkpoint | `.fchk` | cubegen → OTF, PR/V |
+| Cube file | `.cube` | OTF, PR/V only |
 
 For `.fchk` and `.cube` input, `-s, --skip-gaussian` is **required**; conversely it is rejected for structure-file input.
+
+> **Note:** A `.cube` input must be a Gaussian `cubegen` MO cube with a Bohr-unit (positive voxel counts), orthogonal grid. Å-unit grids, non-orthogonal grids, and cubes whose number of voxel values does not match the header are rejected, and neither OTF nor PR/V is computed.
 
 > **Note:** For a `.cif` input, only the **first unique molecule** (index 0) is used. If the cell contains more than one unique molecule (`Z' > 1`), a message is printed to that effect.
 
@@ -80,7 +104,7 @@ ocal xxx.xyz
 # Start from an existing Gaussian formatted checkpoint file
 ocal xxx.fchk -s
 
-# Compute OTF for a single cube file that already exists
+# Compute OTF and PR/V for a single cube file that already exists
 ocal xxx_HOMO.cube -s
 ```
 
@@ -121,10 +145,10 @@ ocal xxx.cif
 
 ### Reusing Results
 ```bash
-# Re-generate the cube files from an existing fchk and recompute OTF
+# Re-generate the cube files from an existing fchk and recompute OTF and PR/V
 ocal xxx.fchk -s
 
-# Recompute OTF from a single existing cube file
+# Recompute OTF and PR/V from a single existing cube file
 ocal xxx_LUMO.cube -s
 ```
 
@@ -134,18 +158,21 @@ ocal xxx_LUMO.cube -s
 `ocal` prints the input file name, timestamps, and every external command it runs, followed by a table of results:
 
 ```
-----------------------------------------
-orbital               OTF    density_sum
-----------------------------------------
-NHOMO        0.1043821735   0.9998672314
-HOMO         0.1187456210   0.9998913057
-LUMO         0.1352907441   0.9998745092
-NLUMO        0.1490233866   0.9998501773
-----------------------------------------
+-----------------------------------------------------------------------------------
+ orbital               OTF           PR/V       PR(Å³)        V(Å³)    density_sum
+-----------------------------------------------------------------------------------
+ NHOMO        0.0259225568   0.1807090746    49.297436   272.800000   1.0000218010
+ HOMO         0.0240639347   0.1545847566    42.170722   272.800000   0.9999913246
+ LUMO         0.0273449721   0.1708050014    46.595604   272.800000   0.9999917497
+ NLUMO        0.0276865261   0.1736069229    47.359969   272.800000   1.0000249449
+-----------------------------------------------------------------------------------
 ```
 
 - **`OTF`**: the orbital tail fraction, i.e. the sum of the normalized probability density over voxels whose distance to the nearest atom exceeds that atom's van der Waals radius.
-- **`density_sum`**: the total normalized density integrated over the whole cube grid. It should be close to `1.0`; a value far from unity indicates that the cube grid is too small or too coarse to contain the orbital, and the OTF from that cube should not be trusted.
+- **`PR/V`**: the participation ratio divided by the molecular volume (dimensionless).
+- **`PR(Å³)`**: the participation ratio itself, i.e. the volume the orbital effectively occupies.
+- **`V(Å³)`**: the union volume of the van der Waals spheres of all atoms, integrated on a cubic grid with a fixed spacing of 0.2 Å. In the four-orbital run the volume computed for the first orbital is reused for the remaining three, since they describe the same molecule.
+- **`density_sum`**: the total normalized density integrated over the whole cube grid. It should be close to `1.0`; a value far from unity indicates that the cube grid is too small or too coarse to contain the orbital, and the OTF and PR/V from that cube should not be trusted.
 
 When the input is a single `.cube` file, the row is labelled with the cube file stem instead of an orbital name.
 
@@ -174,22 +201,19 @@ The MO indices passed to `cubegen` are derived from the number of alpha electron
 1. **Calculation Time**: Almost all of the runtime is the Gaussian geometry optimization; it grows quickly with the number of atoms.
 2. **Memory Usage**: Ensure sufficient memory for large molecules (`-m`).
 3. **Gaussian Installation**: Gaussian 16 is required. `formchk` and `cubegen` ship with Gaussian and must also be callable.
-4. **Cube Grid**: The cube files are generated with `cubegen`'s `-2` (fine) grid and header option `h`. Always check `density_sum` before using an OTF value.
+4. **Cube Grid**: The cube files are generated with `cubegen`'s `-2` (fine) grid and header option `h`. Always check `density_sum` before using an OTF or PR/V value.
+5. **Molecular Volume**: `V` is a grid approximation of the union of hard van der Waals spheres; the grid spacing is fixed to 0.2 Å so that PR/V values are always obtained under the same discretization.
 
 ## Troubleshooting
 
-### Gaussian did not terminate normally
-`ocal` aborts if the Gaussian log does not contain a normal-termination line. Open the `.log` (or `.out`) file next to the input and fix the underlying SCF/optimization problem, then re-run.
+### `Failed to execute g16 / formchk / cubegen` / `Gaussian did not terminate normally`
+The executable was not found, or the Gaussian calculation did not terminate normally.
 
-### `Failed to execute g16 / formchk / cubegen`
-The executable was not found. Make sure the Gaussian environment is loaded (e.g. by sourcing the Gaussian profile script) so that `g16`, `formchk`, and `cubegen` are on `$PATH`.
+- **Executable not found**: Make sure the Gaussian environment is loaded (e.g. by sourcing the Gaussian profile script) so that `g16`, `formchk`, and `cubegen` are on `$PATH`.
+- **Gaussian did not terminate normally**: For `g16`, this is typically an SCF convergence or geometry optimization failure. Check the `.log` (`.out` on Windows) file in the working directory, fix the underlying problem, and re-run. For `.gjf` / `.com` input, the log file is named `xxx_ocal.log`.
 
-### `density_sum` is far from 1.0
-The cube grid did not capture the whole orbital. Re-generate the cube files with a larger or finer grid, then re-run with `-s` to obtain the OTF without repeating the Gaussian calculation.
-
-```bash
-ocal xxx.cube -s
-```
+### `Å-unit cube grids ... are not supported` / `non-orthogonal grid vectors` / `expected N voxel values, got M`
+The cube file is not a supported Gaussian `cubegen` MO cube, or it is truncated. Re-generate it with `cubegen` (e.g. by running `ocal xxx.fchk -s`).
 
 ### If a structure file cannot be read
 Structure files come in various formats, and some may not be readable by ocal. Please try the following:

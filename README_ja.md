@@ -1,4 +1,4 @@
-# ocal: 有機半導体分子の軌道テール割合（OTF）計算プログラム
+# ocal: 有機半導体分子の orbital tail fraction（OTF）・participation ratio per molecular volume（PR/V）計算プログラム
 [![Python](https://img.shields.io/badge/python-3.11%20or%20newer-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PyPI](https://img.shields.io/pypi/v/yu-ocal)](https://pypi.org/project/yu-ocal/)
@@ -7,13 +7,36 @@
 [English](https://github.com/matsui-lab-yamagata-univ/ocal/blob/main/README.md) / 日本語
 
 # 概要
-`ocal` は有機半導体分子 1 分子の orbital tail fraction（OTF）を計算するツールです。分子構造または結晶構造（CIF）から Gaussian の入力を生成し、構造最適化を実行し、チェックポイントファイルを変換して、フロンティア軌道 4 本（NHOMO, HOMO, LUMO, NLUMO）の分子軌道 cube ファイルを生成します。各軌道について、分子のファンデルワールス表面より**外側**にあるボクセルの確率密度を積分し、その割合を OTF として報告します。
+`ocal` は有機半導体分子 1 分子の orbital tail fraction（OTF）と participation ratio per molecular volume（PR/V）を計算するツールです。分子構造または結晶構造（CIF）から Gaussian のインプットファイルを生成し、構造最適化を実行し、チェックポイントファイルを変換して、フロンティア軌道 4 本（NHOMO, HOMO, LUMO, NLUMO）の分子軌道 cube ファイルを生成します。その後、各軌道について OTF と PR/V を計算します。
 
-OTF は、フロンティア軌道がどれだけ分子のファンデルワールス体積からはみ出しているか、すなわち分子間の軌道の重なりにどれだけ寄与しうるかを定量化した指標です。
+OTF は、フロンティア軌道がどれだけ分子のファンデルワールス体積からはみ出しているか、すなわち分子間の軌道の重なりにどれだけ寄与しうるかを定量化した指標です。`PR` は体積の次元を持ち、軌道が実効的に占める体積を表します。無次元量 `PR/V` は、分子自体の大きさに対して軌道がどれだけ非局在化しているかを定量化した指標です。
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/matsui-lab-yamagata-univ/ocal/main/assets/OTF.gif" alt="軌道テール割合（OTF）の概念図" width="400">
+  <img src="https://raw.githubusercontent.com/matsui-lab-yamagata-univ/ocal/main/assets/OTF.gif" alt="orbital tail fraction（OTF）の概念図" width="400">
 </p>
+
+## 定義
+OTF は、各原子のファンデルワールス半径より**外側**の領域で波動関数の絶対値の二乗を積分した値です。
+
+```math
+\mathrm{OTF} = \int_{\mathbf{r} \notin V_\mathrm{vdW}} |\psi(\mathbf{r})|^2 \, d\mathbf{r}
+```
+
+participation ratio `PR`（単位 Å³）と PR/V は次のように定義されます。
+
+```math
+\mathrm{PR} = \frac{\left(\int |\psi(\mathbf{r})|^2 \, d\mathbf{r}\right)^2}{\int |\psi(\mathbf{r})|^4 \, d\mathbf{r}},
+\qquad
+\mathrm{PR/V} = \frac{\mathrm{PR}}{V}
+```
+
+ここで、
+
+- `ψ` は規格化された分子軌道
+- `V_vdW` は全原子のファンデルワールス球の和集合（すべての原子について、原子からの距離がその原子のファンデルワールス半径を超える点が外側）
+- `V` は `V_vdW` の体積
+
+です。
 
 # 必要環境
 * Python 3.11 以降
@@ -27,7 +50,8 @@ OTF は、フロンティア軌道がどれだけ分子のファンデルワー�
 # 注意事項
 * Gaussian 実行ファイルのパスを設定する必要があります。`ocal` は `g16`, `formchk`, `cubegen` をサブプロセスとして呼び出します。
 * 分子は常に**中性閉殻一重項**として扱われます。電荷とスピン多重度は `0 1` に固定され、入力ファイルに含まれる電荷・スピン情報は無視されます。
-* 汎関数と基底関数系は、過去に報告された OTF の値との比較可能性を保つため **B3LYP/6-31G(d,p)** に固定されています。コマンドラインオプションでは変更できません。
+* 汎関数と基底関数系は、過去に報告された OTF・PR/V の値との比較可能性を保つため **B3LYP/6-31G(d,p)** に固定されています。コマンドラインオプションでは変更できません。
+* 同じ理由で、PR/V の分子体積 `V` は常に **0.2 Å** 固定の格子間隔で積分されます。これもコマンドラインオプションでは変更できません。
 * 構造ファイルを入力とした場合、cube ファイルの生成前に必ず `Opt=Tight` で構造最適化が実行されます。
 
 # インストール
@@ -63,11 +87,13 @@ ocal <filename> [options]
 
 | 入力 | 拡張子 | 実行される処理 |
 |------|--------|----------------|
-| 構造ファイル | `.gjf`, `.com`, `.xyz`, `.mol`, `.mol2`, `.cif` | gjf 生成 → Gaussian（Opt=Tight）→ formchk → cubegen → OTF |
-| フォーマット済みチェックポイント | `.fchk` | cubegen → OTF |
-| cube ファイル | `.cube` | OTF のみ |
+| 構造ファイル | `.gjf`, `.com`, `.xyz`, `.mol`, `.mol2`, `.cif` | gjf 生成 → Gaussian（Opt=Tight）→ formchk → cubegen → OTF, PR/V |
+| フォーマット済みチェックポイント | `.fchk` | cubegen → OTF, PR/V |
+| cube ファイル | `.cube` | OTF, PR/V のみ |
 
 `.fchk` および `.cube` を入力とする場合は `-s, --skip-gaussian` が**必須**です。逆に、構造ファイルを入力とする場合は指定できません。
+
+> **注意:** `.cube` 入力は、Bohr 単位（ボクセル数が正）かつ直交格子の Gaussian `cubegen` MO cube である必要があります。Å 単位の格子、非直交格子、ボクセル値の個数がヘッダと一致しない cube はエラーとなり、OTF・PR/V のいずれも計算されません。
 
 > **注意:** `.cif` を入力とした場合、使用されるのは**最初の独立分子**（インデックス 0）のみです。単位格子内に複数の独立分子が存在する場合（`Z' > 1`）は、その旨のメッセージが表示されます。
 
@@ -80,7 +106,7 @@ ocal xxx.xyz
 # 既存の Gaussian フォーマット済みチェックポイントファイルから開始
 ocal xxx.fchk -s
 
-# 既に存在する cube ファイル 1 本から OTF を計算
+# 既に存在する cube ファイル 1 本から OTF と PR/V を計算
 ocal xxx_HOMO.cube -s
 ```
 
@@ -121,10 +147,10 @@ ocal xxx.cif
 
 ### 結果の再利用
 ```bash
-# 既存の fchk から cube を再生成して OTF を計算し直す
+# 既存の fchk から cube を再生成して OTF と PR/V を計算し直す
 ocal xxx.fchk -s
 
-# 既存の cube ファイル 1 本から OTF を計算し直す
+# 既存の cube ファイル 1 本から OTF と PR/V を計算し直す
 ocal xxx_LUMO.cube -s
 ```
 
@@ -134,18 +160,21 @@ ocal xxx_LUMO.cube -s
 `ocal` は入力ファイル名、タイムスタンプ、実行した外部コマンドを表示したのち、結果を表形式で出力します:
 
 ```
-----------------------------------------
-orbital               OTF    density_sum
-----------------------------------------
-NHOMO        0.1043821735   0.9998672314
-HOMO         0.1187456210   0.9998913057
-LUMO         0.1352907441   0.9998745092
-NLUMO        0.1490233866   0.9998501773
-----------------------------------------
+-----------------------------------------------------------------------------------
+ orbital               OTF           PR/V       PR(Å³)        V(Å³)    density_sum
+-----------------------------------------------------------------------------------
+ NHOMO        0.0259225568   0.1807090746    49.297436   272.800000   1.0000218010
+ HOMO         0.0240639347   0.1545847566    42.170722   272.800000   0.9999913246
+ LUMO         0.0273449721   0.1708050014    46.595604   272.800000   0.9999917497
+ NLUMO        0.0276865261   0.1736069229    47.359969   272.800000   1.0000249449
+-----------------------------------------------------------------------------------
 ```
 
-- **`OTF`**: 軌道テール割合。各原子のファンデルワールス半径より外側に位置するボクセルについて、規格化された確率密度を合計した値です。
-- **`density_sum`**: cube グリッド全体で積分した規格化密度の合計。`1.0` に近い値になるはずで、1 から大きく外れている場合は cube グリッドが軌道を収めるには小さすぎるか粗すぎることを意味し、その cube から得られた OTF は信頼できません。
+- **`OTF`**: orbital tail fraction。各原子のファンデルワールス半径より外側に位置するボクセルについて、規格化された確率密度を合計した値です。
+- **`PR/V`**: participation ratio を分子体積で割った無次元量です。
+- **`PR(Å³)`**: participation ratio そのもの、すなわち軌道が実効的に占める体積です。
+- **`V(Å³)`**: 全原子のファンデルワールス球の和集合体積で、間隔 0.2 Å（固定）の立方格子上で積分されます。4 軌道を計算する場合、同一分子であるため最初の軌道で計算した体積を残り 3 軌道で再利用します。
+- **`density_sum`**: cube グリッド全体で積分した規格化密度の合計。`1.0` に近い値になるはずで、1 から大きく外れている場合は cube グリッドが軌道を収めるには小さすぎるか粗すぎることを意味し、その cube から得られた OTF・PR/V は信頼できません。
 
 入力が cube ファイル 1 本の場合、行のラベルは軌道名ではなく cube ファイルのステム名になります。
 
@@ -154,7 +183,7 @@ NLUMO        0.1490233866   0.9998501773
 
 ```
 <入力ディレクトリ>/
-├── <NAME>.gjf          # 生成された Gaussian 入力（Opt=Tight, B3LYP/6-31G(d,p)）
+├── <NAME>.gjf          # 生成された Gaussian インプットファイル（Opt=Tight, B3LYP/6-31G(d,p)）
 ├── <NAME>.log          # Gaussian 出力（Windows 版では .out）
 ├── <NAME>.chk          # Gaussian チェックポイントファイル
 ├── <NAME>.fchk         # フォーマット済みチェックポイントファイル（formchk）
@@ -174,22 +203,19 @@ NLUMO        0.1490233866   0.9998501773
 1. **計算時間**: 実行時間のほとんどは Gaussian の構造最適化であり、原子数の増加に伴って急激に増大します。
 2. **メモリ使用量**: 大きな分子には十分なメモリを確保してください（`-m`）。
 3. **Gaussian のインストール**: Gaussian 16 が必要です。Gaussian に同梱される `formchk` と `cubegen` も実行可能である必要があります。
-4. **cube グリッド**: cube ファイルは `cubegen` の `-2`（fine）グリッドとヘッダーオプション `h` で生成されます。OTF の値を使う前に必ず `density_sum` を確認してください。
+4. **cube グリッド**: cube ファイルは `cubegen` の `-2`（fine）グリッドとヘッダーオプション `h` で生成されます。OTF・PR/V の値を使う前に必ず `density_sum` を確認してください。
+5. **分子体積**: `V` は剛体ファンデルワールス球の和集合を格子で近似したもので、PR/V が常に同じ離散化条件で得られるよう、格子間隔は 0.2 Å に固定されています。
 
 ## トラブルシューティング
 
-### Gaussian が正常終了しない場合
-Gaussian のログに正常終了の行が無い場合、`ocal` は処理を中断します。入力ファイルと同じ場所にある `.log`（Windows 版では `.out`）を確認し、SCF や構造最適化の問題を解決してから再実行してください。
+### `Failed to execute g16 / formchk / cubegen` / `Gaussian did not terminate normally` と表示される場合
+実行ファイルが見つからないか、Gaussian の計算が正常に終了しませんでした。
 
-### `Failed to execute g16 / formchk / cubegen` と表示される場合
-実行ファイルが見つかっていません。Gaussian の環境設定スクリプトを読み込むなどして、`g16`, `formchk`, `cubegen` が `$PATH` に含まれる状態にしてください。
+- **実行ファイルが見つからない場合**: Gaussian の環境設定スクリプトを読み込むなどして、`g16`, `formchk`, `cubegen` が `$PATH` に含まれる状態にしてください。
+- **Gaussian の計算が正常に終了しなかった場合**: `g16` の場合は SCF の不収束や構造最適化の失敗などが考えられます。作業ディレクトリの `.log`（Windows 版では `.out`）を確認し、問題を解決してから再実行してください。`.gjf` / `.com` を入力した場合、ログ名は `xxx_ocal.log` です。
 
-### `density_sum` が 1.0 から大きく外れる場合
-cube グリッドが軌道全体を捉えられていません。より広い、あるいはより細かいグリッドで cube ファイルを再生成し、その結果に対して `-s` を付けて再実行すれば、Gaussian を再計算せずに OTF を求められます。
-
-```bash
-ocal xxx.cube -s
-```
+### `Å-unit cube grids ... are not supported` / `non-orthogonal grid vectors` / `expected N voxel values, got M` と表示される場合
+cube ファイルが対応している Gaussian `cubegen` の MO cube ではないか、途中で切れています。`cubegen` で再生成してください（例: `ocal xxx.fchk -s`）。
 
 ### 構造ファイルが読み込めない場合
 構造ファイルには様々な形式があり、ocal で読み込めないものもあります。以下をお試しください:

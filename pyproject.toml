@@ -1,7 +1,7 @@
 [project]
 name = "yu-ocal"
 dynamic = ["version"]
-description = "Program for the calculation of orbital tail fraction (OTF)."
+description = "Program for the calculation of orbital tail fraction (OTF) and participation ratio per molecular volume (PR/V) for organic semiconductor molecules."
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -15,7 +15,7 @@ authors = [
     {name = "Hiroyuki Matsui", email = "h-matsui@yz.yamagata-u.ac.jp"},
 ]
 readme = "README.md"
-keywords = ["organic semiconductor", "orbital tail fraction"]
+keywords = ["organic semiconductor", "orbital tail fraction", "participation ratio"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
