@@ -44,6 +44,14 @@ ocal.utils.structure\_reader module
    :show-inheritance:
    :undoc-members:
 
+ocal.utils.vdw\_volume module
+-----------------------------
+
+.. automodule:: ocal.utils.vdw_volume
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

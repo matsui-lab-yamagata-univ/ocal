@@ -1,10 +1,17 @@
 """
-ocal: single-molecule orbital tail fraction (OTF) calculator.
+ocal: single-molecule orbital tail fraction (OTF) and PR/V calculator.
+
+Reports both the orbital tail fraction (OTF) and the participation ratio
+per molecular volume ``PR(Å³) / V_vdW(Å³)``, where ``V_vdW`` is the
+all-atom vdW-sphere union volume.
 
 Assumes a neutral closed-shell molecule (charge/spin fixed to ``0 1``).
 Input charge/spin information in structure files is ignored.
 Gaussian functional/basis is fixed to B3LYP/6-31G(d,p) for comparability
-with previous OTF results; only ``Ocal._create_gjf(method=...)`` may override.
+with previous results; only ``Ocal._create_gjf(method=...)`` may override.
+
+Cube inputs must be Gaussian cubegen MO cubes with a Bohr-unit,
+orthogonal grid. Å-unit and non-orthogonal grids are rejected.
 """
 from __future__ import annotations
 
@@ -17,23 +24,27 @@ from pathlib import Path
 from time import time
 
 from . import __date__, __version__
-from .utils.cube_reader import calc_otf as _calc_otf_from_cube
+from .utils.cube_reader import CubeMetrics
+from .utils.cube_reader import calc_otf_pr as _calc_otf_pr_from_cube
 from .utils.gaus_log_reader import check_normal_termination as _check_normal_termination
 from .utils.gjf_maker import GjfMaker
 from .utils.structure_reader import read_structure
 
 print = functools.partial(print, flush=True)
 
-# To make OTF comparable to previous results, the functional and basis set are fixed.
+# To make results comparable to previous results, the functional and basis set are fixed.
 _METHOD = "B3LYP/6-31G(d,p)"
+# Fixed (not user-configurable) so PR/V stays comparable across runs.
+_VDW_GRID_SPACING = 0.2
 _ORBITALS = ("NHOMO", "HOMO", "LUMO", "NLUMO")
 _STRUCTURE_SUFFIXES = {".gjf", ".com", ".xyz", ".mol", ".mol2", ".cif"}
 _SUPPORTED_SUFFIXES = _STRUCTURE_SUFFIXES | {".fchk", ".cube"}
+_TABLE_RULE = "-" * 83
 
 
 def main() -> None:
     """
-    Run the ocal CLI: compute OTF for one molecule from a structure, fchk, or cube.
+    Run the ocal CLI: compute OTF and PR/V for one molecule from a structure, fchk, or cube.
     """
     parser, args = parse_args()
 
@@ -64,27 +75,38 @@ def main() -> None:
     print()
     start_time = time()
 
-    ocal = Ocal(file=args.file, cpu=args.cpu, mem=args.mem)
+    ocal = Ocal(
+        file=args.file,
+        cpu=args.cpu,
+        mem=args.mem,
+    )
 
     if ocal.suffix in _STRUCTURE_SUFFIXES:
         ocal.create_gjf()
         ocal.run_gaussian()
         ocal.create_fchk()
         ocal.create_cube()
-        results = ocal.calc_otf()
+        results = ocal.calc_otf_pr()
     elif ocal.suffix == ".fchk":
         ocal.create_cube()
-        results = ocal.calc_otf()
+        results = ocal.calc_otf_pr()
     else:
-        results = ocal.calc_otf()
+        results = ocal.calc_otf_pr()
 
     print()
-    print("----------------------------------------")
-    print(f"{'orbital':<10} {'OTF':>14} {'density_sum':>14}")
-    print("----------------------------------------")
-    for label, (otf, density_sum) in results.items():
-        print(f"{label:<10} {otf:14.10f} {density_sum:14.10f}")
-    print("----------------------------------------")
+    print(_TABLE_RULE)
+    print(
+        f" {'orbital':<10} {'OTF':>14} {'PR/V':>14} {'PR(Å³)':>12} "
+        f"{'V(Å³)':>12} {'density_sum':>14} "
+    )
+    print(_TABLE_RULE)
+    for label, m in results.items():
+        print(
+            f" {label:<10} {m.otf:>14.10f} {m.pr_over_volume:>14.10f} "
+            f"{m.pr_ang3:>12.6f} {m.vdw_volume_ang3:>12.6f} "
+            f"{m.density_sum:>14.10f} "
+        )
+    print(_TABLE_RULE)
     print()
 
     Ocal.print_timestamp()
@@ -103,11 +125,20 @@ def parse_args() -> tuple[argparse.ArgumentParser, argparse.Namespace]:
     parser = argparse.ArgumentParser(
         prog="ocal",
         description=(
-            "Calculate orbital tail fraction (OTF) for a single molecule. "
+            "Calculate orbital tail fraction (OTF) and participation ratio "
+            "over molecular volume (PR/V) for a single molecule. "
             "Charge/spin are fixed to 0 1 (neutral singlet)."
         ),
     )
-    parser.add_argument("file", help="input file (.gjf/.com/.xyz/.mol/.mol2/.cif/.fchk/.cube)", type=str)
+    parser.add_argument(
+        "file",
+        help=(
+            "input file (.gjf/.com/.xyz/.mol/.mol2/.cif/.fchk/.cube); "
+            ".cube must be a Gaussian cubegen MO cube with a Bohr-unit, "
+            "orthogonal grid; Å-unit and non-orthogonal grids are rejected"
+        ),
+        type=str,
+    )
     parser.add_argument("-c", "--cpu", help="setting the number of cpu (default is 4)", type=int, default=4)
     parser.add_argument(
         "-m", "--mem",
@@ -236,13 +267,18 @@ def _read_alpha_electrons(fchk_path: Path) -> int:
 
 class Ocal:
     """
-    Calculate orbital tail fraction (OTF) for a single molecule.
+    Calculate orbital tail fraction (OTF) and PR/V for a single molecule.
 
     Charge and spin multiplicity are fixed to ``0 1`` (neutral singlet).
     Structure-file inputs always run Opt=Tight at B3LYP/6-31G(d,p).
     """
 
-    def __init__(self, file: str, cpu: int = 4, mem: int = 10) -> None:
+    def __init__(
+        self,
+        file: str,
+        cpu: int = 4,
+        mem: int = 10,
+    ) -> None:
         """
         Initialize Ocal for one input file.
 
@@ -485,24 +521,35 @@ class Ocal:
                 )
             print(f"Created: {self.work_base}_{orb}.cube")
 
-    def calc_otf(self) -> dict[str, tuple[float, float]]:
+    def calc_otf_pr(self) -> dict[str, CubeMetrics]:
         """
-        Compute OTF and density_sum for the target cube file(s).
+        Compute OTF, PR/V, and related quantities for the target cube file(s).
+
+        For the four-orbital path, the vdW union volume from the first
+        orbital is reused for the remaining three (same molecule).
 
         Returns
         -------
-        dict[str, tuple[float, float]]
-            Mapping of orbital label (or cube stem) to ``(otf, density_sum)``.
+        dict[str, CubeMetrics]
+            Mapping of orbital label (or cube stem) to its metrics.
         """
-        results: dict[str, tuple[float, float]] = {}
+        results: dict[str, CubeMetrics] = {}
         if self.suffix == ".cube":
-            label = self.file.stem
-            results[label] = _calc_otf_from_cube(self.file)
+            results[self.file.stem] = _calc_otf_pr_from_cube(
+                self.file, spacing=_VDW_GRID_SPACING
+            )
             return results
 
+        shared_volume: float | None = None
         for orb in _ORBITALS:
             cube_path = Path(f"{self.work_base}_{orb}.cube")
-            results[orb] = _calc_otf_from_cube(cube_path)
+            metrics = _calc_otf_pr_from_cube(
+                cube_path,
+                spacing=_VDW_GRID_SPACING,
+                vdw_volume_ang3=shared_volume,
+            )
+            shared_volume = metrics.vdw_volume_ang3
+            results[orb] = metrics
         return results
 
 
