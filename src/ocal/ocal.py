@@ -36,7 +36,7 @@ print = functools.partial(print, flush=True)
 _METHOD = "B3LYP/6-31G(d,p)"
 # Fixed (not user-configurable) so PR/V stays comparable across runs.
 _VDW_GRID_SPACING = 0.2
-_ORBITALS = ("NHOMO", "HOMO", "LUMO", "NLUMO")
+_ORBITALS = ("NLUMO", "LUMO", "HOMO", "NHOMO")
 _STRUCTURE_SUFFIXES = {".gjf", ".com", ".xyz", ".mol", ".mol2", ".cif"}
 _SUPPORTED_SUFFIXES = _STRUCTURE_SUFFIXES | {".fchk", ".cube"}
 _TABLE_RULE = "-" * 83
@@ -467,10 +467,10 @@ class Ocal:
 
     def create_cube(self) -> None:
         """
-        Generate NHOMO/HOMO/LUMO/NLUMO cube files with cubegen.
+        Generate NLUMO/LUMO/HOMO/NHOMO cube files with cubegen.
 
         MO indices are derived from the number of alpha electrons ``na`` in
-        the fchk: NHOMO=na-1, HOMO=na, LUMO=na+1, NLUMO=na+2.
+        the fchk: NLUMO=na+2, LUMO=na+1, HOMO=na, NHOMO=na-1.
 
         Raises
         ------
@@ -484,10 +484,10 @@ class Ocal:
 
         na = _read_alpha_electrons(fchk_src)
         mo_indices = {
-            "NHOMO": na - 1,
-            "HOMO": na,
-            "LUMO": na + 1,
             "NLUMO": na + 2,
+            "LUMO": na + 1,
+            "HOMO": na,
+            "NHOMO": na - 1,
         }
 
         work_dir = self.work_base.parent

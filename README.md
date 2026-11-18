@@ -7,7 +7,7 @@
 English / [日本語](https://github.com/matsui-lab-yamagata-univ/ocal/blob/main/README_ja.md)
 
 # Overview
-`ocal` is a tool for calculating the orbital tail fraction (OTF) and the participation ratio per molecular volume (PR/V) of a single organic semiconductor molecule. Starting from a molecular or crystal structure file, it generates a Gaussian input, runs a geometry optimization, converts the checkpoint file, and generates molecular-orbital cube files for the four frontier orbitals (NHOMO, HOMO, LUMO, NLUMO). It then computes the OTF and the PR/V for each orbital.
+`ocal` is a tool for calculating the orbital tail fraction (OTF) and the participation ratio per molecular volume (PR/V) of a single organic semiconductor molecule. Starting from a molecular or crystal structure file, it generates a Gaussian input, runs a geometry optimization, converts the checkpoint file, and generates molecular-orbital cube files for the four frontier orbitals (NLUMO, LUMO, HOMO, NHOMO). It then computes the OTF and the PR/V for each orbital.
 
 The OTF quantifies how much of a frontier orbital spills out of the molecular van der Waals volume, i.e. how much of it is available for intermolecular overlap. `PR` has the dimension of volume and expresses the volume the orbital effectively occupies, so the dimensionless `PR/V` quantifies how far the orbital is delocalized relative to the size of the molecule itself.
 
@@ -161,10 +161,10 @@ ocal xxx_LUMO.cube -s
 -----------------------------------------------------------------------------------
  orbital               OTF           PR/V       PR(Å³)        V(Å³)    density_sum
 -----------------------------------------------------------------------------------
- NHOMO        0.0259225568   0.1807090746    49.297436   272.800000   1.0000218010
- HOMO         0.0240639347   0.1545847566    42.170722   272.800000   0.9999913246
- LUMO         0.0273449721   0.1708050014    46.595604   272.800000   0.9999917497
  NLUMO        0.0276865261   0.1736069229    47.359969   272.800000   1.0000249449
+ LUMO         0.0273449721   0.1708050014    46.595604   272.800000   0.9999917497
+ HOMO         0.0240639347   0.1545847566    42.170722   272.800000   0.9999913246
+ NHOMO        0.0259225568   0.1807090746    49.297436   272.800000   1.0000218010
 -----------------------------------------------------------------------------------
 ```
 
@@ -185,16 +185,16 @@ All generated files are written next to the input file, sharing its base name:
 ├── <NAME>.log          # Gaussian output (.out on the Windows build)
 ├── <NAME>.chk          # Gaussian checkpoint file
 ├── <NAME>.fchk         # Formatted checkpoint file (formchk)
-├── <NAME>_NHOMO.cube   # Molecular-orbital cube files (cubegen)
-├── <NAME>_HOMO.cube
+├── <NAME>_NLUMO.cube   # Molecular-orbital cube files (cubegen)
 ├── <NAME>_LUMO.cube
-└── <NAME>_NLUMO.cube
+├── <NAME>_HOMO.cube
+└── <NAME>_NHOMO.cube
 ```
 
 #### Output file naming
-For `.gjf` / `.com` input, the base name becomes `<NAME>_ocal` so that the input file is never overwritten. The cube files are named after the base name with the orbital appended: `<NAME>_NHOMO`, `<NAME>_HOMO`, `<NAME>_LUMO`, `<NAME>_NLUMO`.
+For `.gjf` / `.com` input, the base name becomes `<NAME>_ocal` so that the input file is never overwritten. The cube files are named after the base name with the orbital appended: `<NAME>_NLUMO`, `<NAME>_LUMO`, `<NAME>_HOMO`, `<NAME>_NHOMO`.
 
-The MO indices passed to `cubegen` are derived from the number of alpha electrons `na` in the fchk: NHOMO = `na-1`, HOMO = `na`, LUMO = `na+1`, NLUMO = `na+2`.
+The MO indices passed to `cubegen` are derived from the number of alpha electrons `na` in the fchk: NLUMO = `na+2`, LUMO = `na+1`, HOMO = `na`, NHOMO = `na-1`.
 
 ## Notes
 

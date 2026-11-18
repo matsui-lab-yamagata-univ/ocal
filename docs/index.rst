@@ -9,8 +9,8 @@ Overview
 
 Starting from a molecular or crystal structure file, ``ocal`` generates a Gaussian
 input, runs a geometry optimization, converts the checkpoint file, and generates
-molecular-orbital cube files for the four frontier orbitals (NHOMO, HOMO, LUMO,
-NLUMO). It then computes the OTF and the PR/V for each orbital.
+molecular-orbital cube files for the four frontier orbitals (NLUMO, LUMO, HOMO,
+NHOMO). It then computes the OTF and the PR/V for each orbital.
 
 The OTF quantifies how much of a frontier orbital spills out of the molecular van der
 Waals volume, i.e. how much of it is available for intermolecular overlap. PR has the
