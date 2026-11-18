@@ -7,7 +7,7 @@
 [English](https://github.com/matsui-lab-yamagata-univ/ocal/blob/main/README.md) / 日本語
 
 # 概要
-`ocal` は有機半導体分子 1 分子の orbital tail fraction（OTF）と participation ratio per molecular volume（PR/V）を計算するツールです。分子構造または結晶構造（CIF）から Gaussian のインプットファイルを生成し、構造最適化を実行し、チェックポイントファイルを変換して、フロンティア軌道 4 本（NHOMO, HOMO, LUMO, NLUMO）の分子軌道 cube ファイルを生成します。その後、各軌道について OTF と PR/V を計算します。
+`ocal` は有機半導体分子 1 分子の orbital tail fraction（OTF）と participation ratio per molecular volume（PR/V）を計算するツールです。分子構造または結晶構造（CIF）から Gaussian のインプットファイルを生成し、構造最適化を実行し、チェックポイントファイルを変換して、フロンティア軌道 4 本（NLUMO, LUMO, HOMO, NHOMO）の分子軌道 cube ファイルを生成します。その後、各軌道について OTF と PR/V を計算します。
 
 OTF は、フロンティア軌道がどれだけ分子のファンデルワールス体積からはみ出しているか、すなわち分子間の軌道の重なりにどれだけ寄与しうるかを定量化した指標です。`PR` は体積の次元を持ち、軌道が実効的に占める体積を表します。無次元量 `PR/V` は、分子自体の大きさに対して軌道がどれだけ非局在化しているかを定量化した指標です。
 
@@ -163,10 +163,10 @@ ocal xxx_LUMO.cube -s
 -----------------------------------------------------------------------------------
  orbital               OTF           PR/V       PR(Å³)        V(Å³)    density_sum
 -----------------------------------------------------------------------------------
- NHOMO        0.0259225568   0.1807090746    49.297436   272.800000   1.0000218010
- HOMO         0.0240639347   0.1545847566    42.170722   272.800000   0.9999913246
- LUMO         0.0273449721   0.1708050014    46.595604   272.800000   0.9999917497
  NLUMO        0.0276865261   0.1736069229    47.359969   272.800000   1.0000249449
+ LUMO         0.0273449721   0.1708050014    46.595604   272.800000   0.9999917497
+ HOMO         0.0240639347   0.1545847566    42.170722   272.800000   0.9999913246
+ NHOMO        0.0259225568   0.1807090746    49.297436   272.800000   1.0000218010
 -----------------------------------------------------------------------------------
 ```
 
@@ -187,16 +187,16 @@ ocal xxx_LUMO.cube -s
 ├── <NAME>.log          # Gaussian 出力（Windows 版では .out）
 ├── <NAME>.chk          # Gaussian チェックポイントファイル
 ├── <NAME>.fchk         # フォーマット済みチェックポイントファイル（formchk）
-├── <NAME>_NHOMO.cube   # 分子軌道 cube ファイル（cubegen）
-├── <NAME>_HOMO.cube
+├── <NAME>_NLUMO.cube   # 分子軌道 cube ファイル（cubegen）
 ├── <NAME>_LUMO.cube
-└── <NAME>_NLUMO.cube
+├── <NAME>_HOMO.cube
+└── <NAME>_NHOMO.cube
 ```
 
 #### 出力ファイルの命名
-`.gjf` / `.com` を入力とした場合、入力ファイルを上書きしないようにベース名は `<NAME>_ocal` になります。cube ファイルはベース名に軌道名を付した `<NAME>_NHOMO`, `<NAME>_HOMO`, `<NAME>_LUMO`, `<NAME>_NLUMO` という名前です。
+`.gjf` / `.com` を入力とした場合、入力ファイルを上書きしないようにベース名は `<NAME>_ocal` になります。cube ファイルはベース名に軌道名を付した `<NAME>_NLUMO`, `<NAME>_LUMO`, `<NAME>_HOMO`, `<NAME>_NHOMO` という名前です。
 
-`cubegen` に渡される MO のインデックスは、fchk に記録された alpha 電子数 `na` から決定されます（NHOMO = `na-1`, HOMO = `na`, LUMO = `na+1`, NLUMO = `na+2`）。
+`cubegen` に渡される MO のインデックスは、fchk に記録された alpha 電子数 `na` から決定されます（NLUMO = `na+2`, LUMO = `na+1`, HOMO = `na`, NHOMO = `na-1`）。
 
 ## 補足
 
