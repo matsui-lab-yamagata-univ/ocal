@@ -1,12 +1,13 @@
 """
 Cube file reader and orbital metrics calculator.
 
-Computes the orbital tail fraction (OTF) and the participation ratio per
-molecular volume (PR/V) from Gaussian cubegen MO cube files.
+Computes the orbital tail fraction (OTF) and the participation ratio (PR),
+together with the supplementary PR per molecular volume (PR/V), from
+Gaussian cubegen MO cube files.
 
 Only cubes with a Bohr-unit (all-positive voxel counts), orthogonal grid
 are supported. Å-unit and non-orthogonal grids are rejected when the cube
-is read, so neither OTF nor PR/V is computed for them.
+is read, so neither OTF nor PR is computed for them.
 """
 from __future__ import annotations
 
@@ -107,7 +108,7 @@ class CubeData(NamedTuple):
 
 
 class CubeMetrics(NamedTuple):
-    """OTF and PR/V results for one cube file."""
+    """OTF, PR, and related results for one cube file."""
 
     #: Orbital tail fraction.
     otf: float
@@ -613,7 +614,7 @@ def calc_otf_pr(
     vdw_volume_ang3: float | None = None,
 ) -> CubeMetrics:
     """
-    Compute OTF and PR/V for a cube file, reading it only once.
+    Compute OTF and PR for a cube file, reading it only once.
 
     The cube grid is validated before either metric is computed, so an
     unsupported cube yields neither value.

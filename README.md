@@ -1,4 +1,4 @@
-# ocal: Program for the calculation of orbital tail fraction (OTF) and participation ratio per molecular volume (PR/V) for organic semiconductor molecules
+# ocal: Program for the calculation of orbital tail fraction (OTF) and participation ratio (PR) for organic semiconductor molecules
 [![Python](https://img.shields.io/badge/python-3.11%20or%20newer-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PyPI](https://img.shields.io/pypi/v/yu-ocal)](https://pypi.org/project/yu-ocal/)
@@ -7,9 +7,9 @@
 English / [日本語](https://github.com/matsui-lab-yamagata-univ/ocal/blob/main/README_ja.md)
 
 # Overview
-`ocal` is a tool for calculating the orbital tail fraction (OTF) and the participation ratio per molecular volume (PR/V) of a single organic semiconductor molecule. Starting from a molecular or crystal structure file, it generates a Gaussian input, runs a geometry optimization, converts the checkpoint file, and generates molecular-orbital cube files for the four frontier orbitals (NLUMO, LUMO, HOMO, NHOMO). It then computes the OTF and the PR/V for each orbital.
+`ocal` is a tool for calculating the orbital tail fraction (OTF) and the participation ratio (PR) of a single organic semiconductor molecule. Starting from a molecular or crystal structure file, it generates a Gaussian input, runs a geometry optimization, converts the checkpoint file, and generates molecular-orbital cube files for the four frontier orbitals (NLUMO, LUMO, HOMO, NHOMO). It then computes the OTF and the PR for each orbital, together with the supplementary PR/V.
 
-The OTF quantifies how much of a frontier orbital spills out of the molecular van der Waals volume, i.e. how much of it is available for intermolecular overlap. `PR` has the dimension of volume and expresses the volume the orbital effectively occupies, so the dimensionless `PR/V` quantifies how far the orbital is delocalized relative to the size of the molecule itself.
+The OTF quantifies how much of a frontier orbital spills out of the molecular van der Waals volume, i.e. how much of it is available for intermolecular overlap. `PR` has the dimension of volume and expresses the volume the orbital effectively occupies, i.e. how widely the orbital is delocalized. As a supplementary quantity, `ocal` also reports the dimensionless `PR/V`, which normalizes `PR` by the molecular volume `V`.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/matsui-lab-yamagata-univ/ocal/main/assets/OTF.gif" alt="Orbital tail fraction (OTF) illustration" width="400">
@@ -48,8 +48,8 @@ The following is required:
 # Important notice
 * The path of the Gaussian executable must be set. `ocal` invokes `g16`, `formchk`, and `cubegen` as subprocesses.
 * The molecule is always treated as a **neutral closed-shell singlet**. Charge and spin multiplicity are fixed to `0 1`; any charge/spin information contained in the input file is ignored.
-* The functional and basis set are fixed to **B3LYP/6-31G(d,p)** so that OTF and PR/V values remain comparable with previously published results. This is not exposed as a command-line option.
-* For the same reason, the molecular volume `V` in PR/V is always integrated on a cubic grid with a fixed spacing of **0.2 Å**. This is not exposed as a command-line option either.
+* The functional and basis set are fixed to **B3LYP/6-31G(d,p)** so that OTF and PR values remain comparable with previously published results. This is not exposed as a command-line option.
+* The molecular volume `V` used for the supplementary PR/V is always integrated on a cubic grid with a fixed spacing of **0.2 Å**, so that PR/V values remain comparable as well. This is not exposed as a command-line option either.
 * Structure-file inputs are always geometry-optimized with `Opt=Tight` before the cube files are generated.
 
 # Installation
@@ -85,13 +85,13 @@ ocal <filename> [options]
 
 | Input | Extensions | Pipeline stages executed |
 |-------|------------|--------------------------|
-| Structure file | `.gjf`, `.com`, `.xyz`, `.mol`, `.mol2`, `.cif` | gjf generation → Gaussian (Opt=Tight) → formchk → cubegen → OTF, PR/V |
-| Formatted checkpoint | `.fchk` | cubegen → OTF, PR/V |
-| Cube file | `.cube` | OTF, PR/V only |
+| Structure file | `.gjf`, `.com`, `.xyz`, `.mol`, `.mol2`, `.cif` | gjf generation → Gaussian (Opt=Tight) → formchk → cubegen → OTF, PR |
+| Formatted checkpoint | `.fchk` | cubegen → OTF, PR |
+| Cube file | `.cube` | OTF, PR only |
 
 For `.fchk` and `.cube` input, `-s, --skip-gaussian` is **required**; conversely it is rejected for structure-file input.
 
-> **Note:** A `.cube` input must be a Gaussian `cubegen` MO cube with a Bohr-unit (positive voxel counts), orthogonal grid. Å-unit grids, non-orthogonal grids, and cubes whose number of voxel values does not match the header are rejected, and neither OTF nor PR/V is computed.
+> **Note:** A `.cube` input must be a Gaussian `cubegen` MO cube with a Bohr-unit (positive voxel counts), orthogonal grid. Å-unit grids, non-orthogonal grids, and cubes whose number of voxel values does not match the header are rejected, and neither OTF nor PR is computed.
 
 > **Note:** For a `.cif` input, only the **first unique molecule** (index 0) is used. If the cell contains more than one unique molecule (`Z' > 1`), a message is printed to that effect.
 
@@ -104,7 +104,7 @@ ocal xxx.xyz
 # Start from an existing Gaussian formatted checkpoint file
 ocal xxx.fchk -s
 
-# Compute OTF and PR/V for a single cube file that already exists
+# Compute OTF and PR for a single cube file that already exists
 ocal xxx_HOMO.cube -s
 ```
 
@@ -145,10 +145,10 @@ ocal xxx.cif
 
 ### Reusing Results
 ```bash
-# Re-generate the cube files from an existing fchk and recompute OTF and PR/V
+# Re-generate the cube files from an existing fchk and recompute OTF and PR
 ocal xxx.fchk -s
 
-# Recompute OTF and PR/V from a single existing cube file
+# Recompute OTF and PR from a single existing cube file
 ocal xxx_LUMO.cube -s
 ```
 
@@ -172,7 +172,7 @@ ocal xxx_LUMO.cube -s
 - **`PR/V`**: the participation ratio divided by the molecular volume (dimensionless).
 - **`PR(Å³)`**: the participation ratio itself, i.e. the volume the orbital effectively occupies.
 - **`V(Å³)`**: the union volume of the van der Waals spheres of all atoms, integrated on a cubic grid with a fixed spacing of 0.2 Å. In the four-orbital run the volume computed for the first orbital is reused for the remaining three, since they describe the same molecule.
-- **`density_sum`**: the total normalized density integrated over the whole cube grid. It should be close to `1.0`; a value far from unity indicates that the cube grid is too small or too coarse to contain the orbital, and the OTF and PR/V from that cube should not be trusted.
+- **`density_sum`**: the total normalized density integrated over the whole cube grid. It should be close to `1.0`; a value far from unity indicates that the cube grid is too small or too coarse to contain the orbital, and the OTF, PR, and PR/V from that cube should not be trusted.
 
 When the input is a single `.cube` file, the row is labelled with the cube file stem instead of an orbital name.
 
@@ -201,8 +201,8 @@ The MO indices passed to `cubegen` are derived from the number of alpha electron
 1. **Calculation Time**: Almost all of the runtime is the Gaussian geometry optimization; it grows quickly with the number of atoms.
 2. **Memory Usage**: Ensure sufficient memory for large molecules (`-m`).
 3. **Gaussian Installation**: Gaussian 16 is required. `formchk` and `cubegen` ship with Gaussian and must also be callable.
-4. **Cube Grid**: The cube files are generated with `cubegen`'s `-2` (fine) grid and header option `h`. Always check `density_sum` before using an OTF or PR/V value.
-5. **Molecular Volume**: `V` is a grid approximation of the union of hard van der Waals spheres; the grid spacing is fixed to 0.2 Å so that PR/V values are always obtained under the same discretization.
+4. **Cube Grid**: The cube files are generated with `cubegen`'s `-2` (fine) grid and header option `h`. Always check `density_sum` before using an OTF or PR value.
+5. **Molecular Volume**: `V` is a grid approximation of the union of hard van der Waals spheres; the grid spacing is fixed to 0.2 Å so that the supplementary PR/V values are always obtained under the same discretization.
 
 ## Troubleshooting
 
