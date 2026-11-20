@@ -1,9 +1,10 @@
 """
-ocal: single-molecule orbital tail fraction (OTF) and PR/V calculator.
+ocal: single-molecule orbital tail fraction (OTF) and participation ratio (PR) calculator.
 
-Reports both the orbital tail fraction (OTF) and the participation ratio
-per molecular volume ``PR(Å³) / V_vdW(Å³)``, where ``V_vdW`` is the
-all-atom vdW-sphere union volume.
+Reports the orbital tail fraction (OTF) and the participation ratio
+``PR(Å³)``, together with the supplementary PR per molecular volume
+``PR(Å³) / V_vdW(Å³)``, where ``V_vdW`` is the all-atom vdW-sphere
+union volume.
 
 Assumes a neutral closed-shell molecule (charge/spin fixed to ``0 1``).
 Input charge/spin information in structure files is ignored.
@@ -34,7 +35,8 @@ print = functools.partial(print, flush=True)
 
 # To make results comparable to previous results, the functional and basis set are fixed.
 _METHOD = "B3LYP/6-31G(d,p)"
-# Fixed (not user-configurable) so PR/V stays comparable across runs.
+# Grid spacing (Å) for integrating the vdW union volume V; fixed (not
+# user-configurable) so V and the supplementary PR/V stay comparable across runs.
 _VDW_GRID_SPACING = 0.2
 _ORBITALS = ("NLUMO", "LUMO", "HOMO", "NHOMO")
 _STRUCTURE_SUFFIXES = {".gjf", ".com", ".xyz", ".mol", ".mol2", ".cif"}
@@ -44,7 +46,7 @@ _TABLE_RULE = "-" * 83
 
 def main() -> None:
     """
-    Run the ocal CLI: compute OTF and PR/V for one molecule from a structure, fchk, or cube.
+    Run the ocal CLI: compute OTF and PR for one molecule from a structure, fchk, or cube.
     """
     parser, args = parse_args()
 
@@ -126,7 +128,7 @@ def parse_args() -> tuple[argparse.ArgumentParser, argparse.Namespace]:
         prog="ocal",
         description=(
             "Calculate orbital tail fraction (OTF) and participation ratio "
-            "over molecular volume (PR/V) for a single molecule. "
+            "(PR) for a single molecule. "
             "Charge/spin are fixed to 0 1 (neutral singlet)."
         ),
     )
@@ -267,7 +269,7 @@ def _read_alpha_electrons(fchk_path: Path) -> int:
 
 class Ocal:
     """
-    Calculate orbital tail fraction (OTF) and PR/V for a single molecule.
+    Calculate orbital tail fraction (OTF) and participation ratio (PR) for a single molecule.
 
     Charge and spin multiplicity are fixed to ``0 1`` (neutral singlet).
     Structure-file inputs always run Opt=Tight at B3LYP/6-31G(d,p).
@@ -523,7 +525,7 @@ class Ocal:
 
     def calc_otf_pr(self) -> dict[str, CubeMetrics]:
         """
-        Compute OTF, PR/V, and related quantities for the target cube file(s).
+        Compute OTF, PR, and related quantities for the target cube file(s).
 
         For the four-orbital path, the vdW union volume from the first
         orbital is reused for the remaining three (same molecule).
