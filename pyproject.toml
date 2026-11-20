@@ -1,7 +1,7 @@
 [project]
 name = "yu-ocal"
 dynamic = ["version"]
-description = "Program for the calculation of orbital tail fraction (OTF) and participation ratio per molecular volume (PR/V) for organic semiconductor molecules."
+description = "Program for the calculation of orbital tail fraction (OTF) and participation ratio (PR) for organic semiconductor molecules."
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]

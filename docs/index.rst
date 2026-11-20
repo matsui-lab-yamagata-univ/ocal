@@ -2,7 +2,7 @@ ocal documentation
 ==================
 
 ``ocal`` is a program for the calculation of the orbital tail fraction (OTF) and the
-participation ratio per molecular volume (PR/V) of organic semiconductor molecules.
+participation ratio (PR) of organic semiconductor molecules.
 
 Overview
 --------
@@ -10,13 +10,14 @@ Overview
 Starting from a molecular or crystal structure file, ``ocal`` generates a Gaussian
 input, runs a geometry optimization, converts the checkpoint file, and generates
 molecular-orbital cube files for the four frontier orbitals (NLUMO, LUMO, HOMO,
-NHOMO). It then computes the OTF and the PR/V for each orbital.
+NHOMO). It then computes the OTF and the PR for each orbital, together with the
+supplementary PR/V.
 
 The OTF quantifies how much of a frontier orbital spills out of the molecular van der
 Waals volume, i.e. how much of it is available for intermolecular overlap. PR has the
-dimension of volume and expresses the volume the orbital effectively occupies, so the
-dimensionless PR/V quantifies how far the orbital is delocalized relative to the size of
-the molecule itself.
+dimension of volume and expresses the volume the orbital effectively occupies, i.e.
+how widely the orbital is delocalized. As a supplementary quantity, ``ocal`` also reports
+the dimensionless PR/V, which normalizes PR by the molecular volume :math:`V`.
 
 .. raw:: html
 
@@ -54,9 +55,10 @@ where
 
    The molecule is always treated as a neutral closed-shell singlet (charge/spin fixed
    to ``0 1``), and the functional and basis set are fixed to **B3LYP/6-31G(d,p)** so
-   that OTF and PR/V values remain comparable with previously published results.
-   For the same reason, :math:`V` is always integrated on a cubic grid with a fixed
-   spacing of 0.2 Å.
+   that OTF and PR values remain comparable with previously published results.
+   The molecular volume :math:`V` used for the supplementary PR/V is always integrated
+   on a cubic grid with a fixed spacing of 0.2 Å, so that PR/V values remain comparable
+   as well.
 
 Requirements
 ------------
@@ -104,13 +106,13 @@ stage:
      - Pipeline stages executed
    * - Structure file
      - ``.gjf``, ``.com``, ``.xyz``, ``.mol``, ``.mol2``, ``.cif``
-     - gjf generation → Gaussian (Opt=Tight) → formchk → cubegen → OTF, PR/V
+     - gjf generation → Gaussian (Opt=Tight) → formchk → cubegen → OTF, PR
    * - Formatted checkpoint
      - ``.fchk``
-     - cubegen → OTF, PR/V
+     - cubegen → OTF, PR
    * - Cube file
      - ``.cube``
-     - OTF, PR/V only
+     - OTF, PR only
 
 For ``.fchk`` and ``.cube`` input, ``-s, --skip-gaussian`` is required; conversely it
 is rejected for structure-file input. A ``.cube`` input must be a Gaussian ``cubegen``
@@ -150,7 +152,7 @@ Examples
    # Start from an existing Gaussian formatted checkpoint file
    ocal xxx.fchk -s
 
-   # Compute OTF and PR/V for a single cube file that already exists
+   # Compute OTF and PR for a single cube file that already exists
    ocal xxx_HOMO.cube -s
 
 The full usage manual, including the description of the generated files and

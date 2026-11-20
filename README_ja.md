@@ -1,4 +1,4 @@
-# ocal: 有機半導体分子の orbital tail fraction（OTF）・participation ratio per molecular volume（PR/V）計算プログラム
+# ocal: 有機半導体分子の orbital tail fraction（OTF）・participation ratio（PR）計算プログラム
 [![Python](https://img.shields.io/badge/python-3.11%20or%20newer-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PyPI](https://img.shields.io/pypi/v/yu-ocal)](https://pypi.org/project/yu-ocal/)
@@ -7,9 +7,9 @@
 [English](https://github.com/matsui-lab-yamagata-univ/ocal/blob/main/README.md) / 日本語
 
 # 概要
-`ocal` は有機半導体分子 1 分子の orbital tail fraction（OTF）と participation ratio per molecular volume（PR/V）を計算するツールです。分子構造または結晶構造（CIF）から Gaussian のインプットファイルを生成し、構造最適化を実行し、チェックポイントファイルを変換して、フロンティア軌道 4 本（NLUMO, LUMO, HOMO, NHOMO）の分子軌道 cube ファイルを生成します。その後、各軌道について OTF と PR/V を計算します。
+`ocal` は有機半導体分子 1 分子の orbital tail fraction（OTF）と participation ratio（PR）を計算するツールです。分子構造または結晶構造（CIF）から Gaussian のインプットファイルを生成し、構造最適化を実行し、チェックポイントファイルを変換して、フロンティア軌道 4 本（NLUMO, LUMO, HOMO, NHOMO）の分子軌道 cube ファイルを生成します。その後、各軌道について OTF と PR を計算し、補助的な量として PR/V も出力します。
 
-OTF は、フロンティア軌道がどれだけ分子のファンデルワールス体積からはみ出しているか、すなわち分子間の軌道の重なりにどれだけ寄与しうるかを定量化した指標です。`PR` は体積の次元を持ち、軌道が実効的に占める体積を表します。無次元量 `PR/V` は、分子自体の大きさに対して軌道がどれだけ非局在化しているかを定量化した指標です。
+OTF は、フロンティア軌道がどれだけ分子のファンデルワールス体積からはみ出しているか、すなわち分子間の軌道の重なりにどれだけ寄与しうるかを定量化した指標です。`PR` は体積の次元を持ち、軌道が実効的に占める体積、すなわち軌道がどれだけ広く非局在化しているかを表します。補助的な量として、`PR` を分子体積 `V` で規格化した無次元量 `PR/V` も出力します。
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/matsui-lab-yamagata-univ/ocal/main/assets/OTF.gif" alt="orbital tail fraction（OTF）の概念図" width="400">
@@ -50,8 +50,8 @@ participation ratio `PR`（単位 Å³）と PR/V は次のように定義され
 # 注意事項
 * Gaussian 実行ファイルのパスを設定する必要があります。`ocal` は `g16`, `formchk`, `cubegen` をサブプロセスとして呼び出します。
 * 分子は常に**中性閉殻一重項**として扱われます。電荷とスピン多重度は `0 1` に固定され、入力ファイルに含まれる電荷・スピン情報は無視されます。
-* 汎関数と基底関数系は、過去に報告された OTF・PR/V の値との比較可能性を保つため **B3LYP/6-31G(d,p)** に固定されています。コマンドラインオプションでは変更できません。
-* 同じ理由で、PR/V の分子体積 `V` は常に **0.2 Å** 固定の格子間隔で積分されます。これもコマンドラインオプションでは変更できません。
+* 汎関数と基底関数系は、過去に報告された OTF・PR の値との比較可能性を保つため **B3LYP/6-31G(d,p)** に固定されています。コマンドラインオプションでは変更できません。
+* 補助量 PR/V の値も比較可能に保つため、分子体積 `V` は常に **0.2 Å** 固定の格子間隔で積分されます。これもコマンドラインオプションでは変更できません。
 * 構造ファイルを入力とした場合、cube ファイルの生成前に必ず `Opt=Tight` で構造最適化が実行されます。
 
 # インストール
@@ -87,13 +87,13 @@ ocal <filename> [options]
 
 | 入力 | 拡張子 | 実行される処理 |
 |------|--------|----------------|
-| 構造ファイル | `.gjf`, `.com`, `.xyz`, `.mol`, `.mol2`, `.cif` | gjf 生成 → Gaussian（Opt=Tight）→ formchk → cubegen → OTF, PR/V |
-| フォーマット済みチェックポイント | `.fchk` | cubegen → OTF, PR/V |
-| cube ファイル | `.cube` | OTF, PR/V のみ |
+| 構造ファイル | `.gjf`, `.com`, `.xyz`, `.mol`, `.mol2`, `.cif` | gjf 生成 → Gaussian（Opt=Tight）→ formchk → cubegen → OTF, PR |
+| フォーマット済みチェックポイント | `.fchk` | cubegen → OTF, PR |
+| cube ファイル | `.cube` | OTF, PR のみ |
 
 `.fchk` および `.cube` を入力とする場合は `-s, --skip-gaussian` が**必須**です。逆に、構造ファイルを入力とする場合は指定できません。
 
-> **注意:** `.cube` 入力は、Bohr 単位（ボクセル数が正）かつ直交格子の Gaussian `cubegen` MO cube である必要があります。Å 単位の格子、非直交格子、ボクセル値の個数がヘッダと一致しない cube はエラーとなり、OTF・PR/V のいずれも計算されません。
+> **注意:** `.cube` 入力は、Bohr 単位（ボクセル数が正）かつ直交格子の Gaussian `cubegen` MO cube である必要があります。Å 単位の格子、非直交格子、ボクセル値の個数がヘッダと一致しない cube はエラーとなり、OTF・PR のいずれも計算されません。
 
 > **注意:** `.cif` を入力とした場合、使用されるのは**最初の独立分子**（インデックス 0）のみです。単位格子内に複数の独立分子が存在する場合（`Z' > 1`）は、その旨のメッセージが表示されます。
 
@@ -106,7 +106,7 @@ ocal xxx.xyz
 # 既存の Gaussian フォーマット済みチェックポイントファイルから開始
 ocal xxx.fchk -s
 
-# 既に存在する cube ファイル 1 本から OTF と PR/V を計算
+# 既に存在する cube ファイル 1 本から OTF と PR を計算
 ocal xxx_HOMO.cube -s
 ```
 
@@ -147,10 +147,10 @@ ocal xxx.cif
 
 ### 結果の再利用
 ```bash
-# 既存の fchk から cube を再生成して OTF と PR/V を計算し直す
+# 既存の fchk から cube を再生成して OTF と PR を計算し直す
 ocal xxx.fchk -s
 
-# 既存の cube ファイル 1 本から OTF と PR/V を計算し直す
+# 既存の cube ファイル 1 本から OTF と PR を計算し直す
 ocal xxx_LUMO.cube -s
 ```
 
@@ -174,7 +174,7 @@ ocal xxx_LUMO.cube -s
 - **`PR/V`**: participation ratio を分子体積で割った無次元量です。
 - **`PR(Å³)`**: participation ratio そのもの、すなわち軌道が実効的に占める体積です。
 - **`V(Å³)`**: 全原子のファンデルワールス球の和集合体積で、間隔 0.2 Å（固定）の立方格子上で積分されます。4 軌道を計算する場合、同一分子であるため最初の軌道で計算した体積を残り 3 軌道で再利用します。
-- **`density_sum`**: cube グリッド全体で積分した規格化密度の合計。`1.0` に近い値になるはずで、1 から大きく外れている場合は cube グリッドが軌道を収めるには小さすぎるか粗すぎることを意味し、その cube から得られた OTF・PR/V は信頼できません。
+- **`density_sum`**: cube グリッド全体で積分した規格化密度の合計。`1.0` に近い値になるはずで、1 から大きく外れている場合は cube グリッドが軌道を収めるには小さすぎるか粗すぎることを意味し、その cube から得られた OTF・PR・PR/V は信頼できません。
 
 入力が cube ファイル 1 本の場合、行のラベルは軌道名ではなく cube ファイルのステム名になります。
 
@@ -203,8 +203,8 @@ ocal xxx_LUMO.cube -s
 1. **計算時間**: 実行時間のほとんどは Gaussian の構造最適化であり、原子数の増加に伴って急激に増大します。
 2. **メモリ使用量**: 大きな分子には十分なメモリを確保してください（`-m`）。
 3. **Gaussian のインストール**: Gaussian 16 が必要です。Gaussian に同梱される `formchk` と `cubegen` も実行可能である必要があります。
-4. **cube グリッド**: cube ファイルは `cubegen` の `-2`（fine）グリッドとヘッダーオプション `h` で生成されます。OTF・PR/V の値を使う前に必ず `density_sum` を確認してください。
-5. **分子体積**: `V` は剛体ファンデルワールス球の和集合を格子で近似したもので、PR/V が常に同じ離散化条件で得られるよう、格子間隔は 0.2 Å に固定されています。
+4. **cube グリッド**: cube ファイルは `cubegen` の `-2`（fine）グリッドとヘッダーオプション `h` で生成されます。OTF・PR の値を使う前に必ず `density_sum` を確認してください。
+5. **分子体積**: `V` は剛体ファンデルワールス球の和集合を格子で近似したもので、補助量 PR/V が常に同じ離散化条件で得られるよう、格子間隔は 0.2 Å に固定されています。
 
 ## トラブルシューティング
 
